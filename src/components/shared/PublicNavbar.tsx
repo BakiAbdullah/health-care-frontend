@@ -1,9 +1,17 @@
+"use client";
+import { Menu } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../ui/sheet";
-import { Menu } from "lucide-react";
+import { UseUser } from "@/providers/UserProvider";
+import { logOutUser } from "@/utility/logOut";
 
 const PublicNavbar = () => {
+  const { user } = UseUser();
+
+  const role = user?.role || "guest";
+  console.log(role, "from public nav");
+
   const navItems = [
     { href: "#", label: "Consultation" },
     { href: "#", label: "Health Plans" },
@@ -11,6 +19,9 @@ const PublicNavbar = () => {
     { href: "#", label: "Diagnostics" },
     { href: "#", label: "NGOs" },
   ];
+  if (role === "ADMIN") {
+    navItems.push({ href: "/admin/dashboard", label: "Admin Dashboard" });
+  }
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur dark:bg-background/95">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -31,9 +42,20 @@ const PublicNavbar = () => {
         </nav>
 
         <div className="hidden md:flex items-center space-x-2">
-          <Link href="/login" className="text-lg font-medium">
-            <Button>Login</Button>
-          </Link>
+          {role !== "guest" ? (
+            <Button
+              variant="destructive"
+              onClick={() => {
+                logOutUser();
+              }}
+            >
+              Logout
+            </Button>
+          ) : (
+            <Link href="/login" className="text-lg font-medium">
+              <Button>Login</Button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -42,8 +64,7 @@ const PublicNavbar = () => {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline">
-                {" "}
-                <Menu />{" "}
+                <Menu />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px] p-4">
@@ -60,9 +81,20 @@ const PublicNavbar = () => {
                 ))}
                 <div className="border-t pt-4 flex flex-col space-y-4">
                   <div className="flex justify-center"></div>
-                  <Link href="/login" className="text-lg font-medium">
-                    <Button>Login</Button>
-                  </Link>
+                  {role !== "guest" ? (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        logOutUser();
+                      }}
+                    >
+                      Logout
+                    </Button>
+                  ) : (
+                    <Link href="/login" className="text-lg font-medium">
+                      <Button>Login</Button>
+                    </Link>
+                  )}
                 </div>
               </nav>
             </SheetContent>
