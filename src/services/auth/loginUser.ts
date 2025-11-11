@@ -1,9 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
+import {
+  getDefaultDashboardRoute,
+  isValidRedirectForRole,
+  TUserRole,
+} from "@/lib/auth-utils";
 import { parse } from "cookie";
-import { cookies } from "next/headers";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { redirect } from "next/navigation";
 import z from "zod";
-
+import { setCookie } from "./tokenHandlers";
 
 const loginValidationZodSchema = z.object({
   email: z.email({
@@ -21,7 +27,7 @@ const loginValidationZodSchema = z.object({
 
 export const loginUser = async (_currentState: any, formData: any) => {
   try {
-    // const redirectTo = formData.get("redirect") || null;
+    const redirectTo = formData.get("redirect") || null;
     let accessTokenObject: null | any = null;
     let refreshTokenObject: null | any = null;
 
@@ -50,10 +56,10 @@ export const loginUser = async (_currentState: any, formData: any) => {
       headers: {
         "Content-Type": "application/json",
       },
-      // credentials: "include"
     });
 
-    // const result = await res.json();
+    const result = await res.json();
+
     const setCookieHeaders = res.headers.getSetCookie();
 
     if (setCookieHeaders && setCookieHeaders.length > 0) {
@@ -82,19 +88,15 @@ export const loginUser = async (_currentState: any, formData: any) => {
       throw new Error("Tokens not found in cookies!");
     }
 
-    // Now Set the Cookie />>>
-
-    // (await cookies()).set()
-    const cookieStore = await cookies();
-
-    cookieStore.set("accessToken", accessTokenObject.accessToken, {
+    await setCookie("accessToken", accessTokenObject.accessToken, {
       secure: true,
       httpOnly: true,
       maxAge: parseInt(accessTokenObject["Max-Age"]) || 1000 * 60 * 60,
       path: accessTokenObject.Path || "/",
       sameSite: accessTokenObject["SameSite"] || "none",
     });
-    cookieStore.set("refreshToken", refreshTokenObject.refreshToken, {
+
+    await setCookie("refreshToken", refreshTokenObject.refreshToken, {
       secure: true,
       httpOnly: true,
       maxAge:
@@ -103,31 +105,44 @@ export const loginUser = async (_currentState: any, formData: any) => {
       sameSite: refreshTokenObject["SameSite"] || "none",
     });
 
-    // const verifiedToken: JwtPayload | string = jwt.verify(
-    //   accessTokenObject.accessToken,
-    //   process.env.JWT_SECRET as string
-    // );
+    const verifiedToken: JwtPayload | string = jwt.verify(
+      accessTokenObject.accessToken,
+      process.env.ACCESS_TOKEN_SECRET as string
+    );
 
-    // if (typeof verifiedToken === "string") {
-    //   throw new Error("Invalid token");
-    // }
+    if (typeof verifiedToken === "string") {
+      throw new Error("Invalid token");
+    }
 
-    // const userRole: UserRole = verifiedToken.role;
+    const userRole: TUserRole = verifiedToken.role;
 
-    // if (redirectTo) {
-    //   const requestedPath = redirectTo.toString();
-    //   if (isValidRedirectForRole(requestedPath, userRole)) {
-    //     redirect(requestedPath);
-    //   } else {
-    //     redirect(getDefaultDashboardRoute(userRole));
-    //   }
-    // }
+    if (!result.success) {
+      throw new Error(result.message || "Login Failed!");
+    }
+
+    if (redirectTo) {
+      const requestedPath = redirectTo.toString();
+      if (isValidRedirectForRole(requestedPath, userRole)) {
+        redirect(`${requestedPath}?loggedIn=true`);
+      } else {
+        redirect(`${getDefaultDashboardRoute(userRole)}?loggedIn=true`);
+      }
+    } else {
+      redirect(`${getDefaultDashboardRoute(userRole)}?loggedIn=true`);
+    }
   } catch (error: any) {
     // Re-throw NEXT_REDIRECT errors so Next.js can handle them
     if (error?.digest?.startsWith("NEXT_REDIRECT")) {
       throw error;
     }
     console.log(error);
-    return { error: "Login failed" };
+    return {
+      success: false,
+      message: `${
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Login Failed. You might have entered incorrect email or password."
+      }`,
+    };
   }
-}
+};

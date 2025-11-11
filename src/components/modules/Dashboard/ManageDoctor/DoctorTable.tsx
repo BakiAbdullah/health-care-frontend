@@ -16,7 +16,7 @@ import HeartbeatLoader from "@/components/shared/Loader";
 import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 import { DoctorFormDialog } from "./DoctorFormDialog";
-import { DoctorInterface } from "@/types/user";
+import { DoctorInterface } from "@/types/user.interface";
 
 export function DoctorTable() {
   const { doctors, removeDoctor, isLoading } = useDoctors();

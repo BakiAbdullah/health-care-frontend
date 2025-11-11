@@ -1,16 +1,17 @@
-"use client";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../ui/sheet";
-import { UseUser } from "@/providers/UserProvider";
-import { logOutUser } from "@/utility/logOut";
+// import { logOutUser } from "@/utility/logOut";
+import { logoutUser } from "@/services/auth/logoutUser";
+import { getCookie } from "@/services/auth/tokenHandlers";
+import LogoutButton from "./LogoutButton";
 
-const PublicNavbar = () => {
-  const { user } = UseUser();
+const PublicNavbar = async () => {
+  // const { user } = UseUser();
 
-  const role = user?.role || "guest";
-  console.log(role, "from public nav");
+  // const role = user?.role || "guest";
+  // console.log(role, "from public nav");
 
   const navItems = [
     { href: "#", label: "Consultation" },
@@ -19,9 +20,13 @@ const PublicNavbar = () => {
     { href: "#", label: "Diagnostics" },
     { href: "#", label: "NGOs" },
   ];
-  if (role === "ADMIN") {
-    navItems.push({ href: "/admin/dashboard", label: "Admin Dashboard" });
-  }
+  // if (role === "ADMIN") {
+  //   navItems.push({ href: "/admin/dashboard", label: "Admin Dashboard" });
+  // }
+
+  const accessToken = await getCookie("accessToken");
+  // const isLoggedIn = accessToken ? true : false;
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur dark:bg-background/95">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -42,15 +47,8 @@ const PublicNavbar = () => {
         </nav>
 
         <div className="hidden md:flex items-center space-x-2">
-          {role !== "guest" ? (
-            <Button
-              variant="destructive"
-              onClick={() => {
-                logOutUser();
-              }}
-            >
-              Logout
-            </Button>
+          {accessToken ? (
+            <LogoutButton/>
           ) : (
             <Link href="/login" className="text-lg font-medium">
               <Button>Login</Button>
@@ -81,11 +79,11 @@ const PublicNavbar = () => {
                 ))}
                 <div className="border-t pt-4 flex flex-col space-y-4">
                   <div className="flex justify-center"></div>
-                  {role !== "guest" ? (
+                  {accessToken ? (
                     <Button
                       variant="destructive"
                       onClick={() => {
-                        logOutUser();
+                        logoutUser();
                       }}
                     >
                       Logout

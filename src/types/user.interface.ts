@@ -1,16 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // export type UserRole = "ADMIN" | "DOCTOR" | "PATIENT";
 
+import { TUserRole } from "@/lib/auth-utils";
+
 export interface IUser {
-  id: string;
+  id?: string;
+  name: string;
   email: string;
-  role: "ADMIN" | "DOCTOR" | "PATIENT";
-  exp?: number;
-  iat?: number;
+  role: TUserRole;
 }
-
-export type TUserRole = "ADMIN" | "DOCTOR" | "PATIENT";
-
 
 export interface DoctorInterface {
   id: string;
