@@ -1,11 +1,11 @@
 import React from 'react';
-import DashboardPage from './page';
 
-const AdminDashboardLayout = () => {
+const AdminDashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div>
-      <DashboardPage/>
-    </div>
+    // <div>
+    //   <DashboardPage />
+    // </div>
+    <div>{children}</div>
   );
 };
 
